@@ -34,26 +34,27 @@ class GeminiClient:
         self._region: str = os.getenv("GEMINI_REGION", _DEFAULT_REGION)
         self._model: str = os.getenv("GEMINI_MODEL", _DEFAULT_MODEL)
 
-    def _get_credentials(self) -> service_account.Credentials:
-        """Carga credenciales del service account para Gemini."""
+    def _get_credentials(self):
+        """Carga credenciales para Gemini: SA file o Application Default Credentials."""
 
         if self._credentials is not None and self._credentials.valid:
             return self._credentials
 
         sa_file = self._resolve_service_account_file()
-        if not sa_file:
-            raise RuntimeError(
-                "GEMINI_SERVICE_ACCOUNT_FILE no configurado. "
-                "Defina la variable de entorno con la ruta al JSON de la service account."
+        if sa_file:
+            self._credentials = service_account.Credentials.from_service_account_file(
+                sa_file,
+                scopes=_SCOPES,
             )
+            with open(sa_file, "r") as f:
+                sa_data = json.load(f)
+                self._project_id = sa_data.get("project_id", "")
+        else:
+            from google.auth import default as google_auth_default
 
-        self._credentials = service_account.Credentials.from_service_account_file(
-            sa_file,
-            scopes=_SCOPES,
-        )
-        with open(sa_file, "r") as f:
-            sa_data = json.load(f)
-            self._project_id = sa_data.get("project_id", "")
+            self._credentials, project = google_auth_default(scopes=_SCOPES)
+            self._project_id = project or os.getenv("GOOGLE_CLOUD_PROJECT", "")
+            logger.info("gemini.client.using_adc project_id=%s", self._project_id)
 
         self._credentials.refresh(google_auth_requests.Request())
         logger.info(
