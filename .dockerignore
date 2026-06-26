@@ -1,0 +1,25 @@
+.git/
+.gitignore
+.env
+.env.*
+*.md
+cloudbuild.yaml
+cloudrun.yaml
+
+# Python artifacts
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+.pytest_cache/
+
+# Secrets
+*.json
+!app/tests/fixtures/*.json
+
+# Tests (no needed in production image)
+app/tests/
+
+# IDE
+.vscode/
+.idea/
