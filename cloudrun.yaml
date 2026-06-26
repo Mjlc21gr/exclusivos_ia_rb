@@ -1,0 +1,84 @@
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: exclusivos-ia-rb
+  labels:
+    cloud.googleapis.com/location: us-central1
+    managed-by: cloudrun-yaml
+spec:
+  template:
+    metadata:
+      labels:
+        environment: dev
+    spec:
+      serviceAccountName: SA_EMAIL@PROJECT_ID.iam.gserviceaccount.com
+      containers:
+        - image: us-central1-docker.pkg.dev/PROJECT_ID/exclusivos-ia-rb/exclusivos-ia-rb:latest
+          ports:
+            - containerPort: 8080
+          resources:
+            limits:
+              cpu: 1000m
+              memory: 512Mi
+          env:
+            - name: SPREADSHEET_ID
+              value: "YOUR_SPREADSHEET_ID"
+            - name: SHEET_TURNOS
+              value: "TURNOS_TECNICOS"
+            - name: SHEET_SERVICIOS
+              value: "SERVICIOS"
+            - name: SHEET_PREASIGNACIONES
+              value: "PREASIGNACIONES"
+            - name: SHEET_CONFIG
+              value: "CONFIG"
+            - name: SHEET_DATOS_TECNICOS
+              value: "DATOS_TECNICOS"
+            - name: DECISION_ENGINE
+              value: "ortools"
+            - name: DATADOG_ENABLED
+              value: "false"
+            - name: DD_SITE
+              value: "datadoghq.com"
+            - name: DD_SERVICE
+              value: "exclusivos-ia-rb"
+            - name: DD_ENV
+              value: "dev"
+            - name: DD_VERSION
+              value: "latest"
+            - name: DD_TRACE_ENABLED
+              value: "true"
+            - name: DD_APM_ENABLED
+              value: "true"
+            - name: DD_LLMOBS_ENABLED
+              value: "false"
+            - name: DD_LOGS_ENABLED
+              value: "false"
+            - name: DD_SERVERLESS_LOG_LEVEL
+              value: "OFF"
+            - name: DD_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  secret: exclusivos-ia-rb-datadog-key-dev
+                  version: latest
+            - name: ENDPOINT_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  secret: exclusivos-ia-rb-api-key-dev
+                  version: latest
+            - name: GOOGLE_MAPS_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  secret: exclusivos-ia-rb-maps-key-dev
+                  version: latest
+            - name: GOOGLE_CHAT_WEBHOOK_URL
+              valueFrom:
+                secretKeyRef:
+                  secret: exclusivos-ia-rb-chat-webhook-dev
+                  version: latest
+      scaling:
+        minReplicas: 1
+        maxReplicas: 5
+      timeoutSeconds: 180
+  traffic:
+    - latestRevision: true
+      percent: 100

@@ -1,0 +1,39 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+env/
+*.egg-info/
+dist/
+build/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Secrets and credentials - NEVER commit these
+.env
+*.json
+!app/tests/fixtures/*.json
+
+# Service accounts
+service-account.json
+gemini-service-account.json
+
+# Test coverage
+htmlcov/
+.coverage
+.pytest_cache/
+
+# Simulation outputs
+simulation_inputs/

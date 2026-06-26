@@ -1,0 +1,17 @@
+__pycache__/
+*.pyc
+*.pyo
+tests/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Secrets - should be provided via env vars or mounted secrets
+service-account.json
+gemini-service-account.json
+*.json
+
+# Dev artifacts
+.venv/
+.env
+.env.*

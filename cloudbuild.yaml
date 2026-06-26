@@ -1,0 +1,86 @@
+steps:
+  # Build the Docker image from the app directory
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '-t'
+      - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_ARTIFACT_REPO}/${_SERVICE_NAME}:${_COMMIT_SHA}'
+      - '.'
+    dir: 'app'
+
+  # Push the Docker image to Google Artifact Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'push'
+      - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_ARTIFACT_REPO}/${_SERVICE_NAME}:${_COMMIT_SHA}'
+
+  # Deploy the service to Cloud Run
+  - name: 'gcr.io/cloud-builders/gcloud'
+    args:
+      - 'run'
+      - 'deploy'
+      - '${_SERVICE_NAME}'
+      - '--image'
+      - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_ARTIFACT_REPO}/${_SERVICE_NAME}:${_COMMIT_SHA}'
+      - '--region=${_REGION}'
+      - '--platform=managed'
+      - '--allow-unauthenticated'
+      - '--service-account=${_SERVICE_ACCOUNT}'
+      - '--cpu=1'
+      - '--memory=512Mi'
+      - '--timeout=180s'
+      - '--min-instances=1'
+      - '--max-instances=5'
+      # Environment variables
+      - '--set-env-vars=SPREADSHEET_ID=${_SPREADSHEET_ID}'
+      - '--set-env-vars=SHEET_TURNOS=${_SHEET_TURNOS}'
+      - '--set-env-vars=SHEET_SERVICIOS=${_SHEET_SERVICIOS}'
+      - '--set-env-vars=SHEET_PREASIGNACIONES=${_SHEET_PREASIGNACIONES}'
+      - '--set-env-vars=SHEET_CONFIG=${_SHEET_CONFIG}'
+      - '--set-env-vars=SHEET_DATOS_TECNICOS=${_SHEET_DATOS_TECNICOS}'
+      - '--set-env-vars=DECISION_ENGINE=${_DECISION_ENGINE}'
+      - '--set-env-vars=DATADOG_ENABLED=${_DATADOG_ENABLED}'
+      - '--set-env-vars=DD_SITE=${_DATADOG_SITE}'
+      - '--set-env-vars=DD_SERVICE=${_SERVICE_NAME}'
+      - '--set-env-vars=DD_ENV=${_BRANCH_NAME}'
+      - '--set-env-vars=DD_VERSION=${_COMMIT_SHA}'
+      - '--set-env-vars=DD_TRACE_ENABLED=${_DD_TRACE_ENABLED}'
+      - '--set-env-vars=DD_APM_ENABLED=${_DD_APM_ENABLED}'
+      - '--set-env-vars=DD_LLMOBS_ENABLED=${_DD_LLMOBS_ENABLED}'
+      - '--set-env-vars=DD_LOGS_ENABLED=${_DD_LOGS_ENABLED}'
+      - '--set-env-vars=DD_SERVERLESS_LOG_LEVEL=${_DD_SERVERLESS_LOG_LEVEL}'
+      # Secrets from Secret Manager
+      - '--set-secrets=DD_API_KEY=${_SECRET_DD_API_KEY}:latest'
+      - '--set-secrets=ENDPOINT_API_KEY=${_SECRET_API_KEY}:latest'
+      - '--set-secrets=GOOGLE_MAPS_API_KEY=${_SECRET_MAPS_KEY}:latest'
+      - '--set-secrets=GOOGLE_CHAT_WEBHOOK_URL=${_SECRET_CHAT_WEBHOOK}:latest'
+    id: 'Deploy Cloud Run Service'
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+
+substitutions:
+  _COMMIT_SHA: "manual-run"
+  _BRANCH_NAME: "dev"
+  _REGION: "us-central1"
+  _SERVICE_NAME: "exclusivos-ia-rb"
+  _ARTIFACT_REPO: "exclusivos-ia-rb"
+  _SERVICE_ACCOUNT: "SA_EMAIL@PROJECT_ID.iam.gserviceaccount.com"
+  _SPREADSHEET_ID: "YOUR_SPREADSHEET_ID"
+  _SHEET_TURNOS: "TURNOS_TECNICOS"
+  _SHEET_SERVICIOS: "SERVICIOS"
+  _SHEET_PREASIGNACIONES: "PREASIGNACIONES"
+  _SHEET_CONFIG: "CONFIG"
+  _SHEET_DATOS_TECNICOS: "DATOS_TECNICOS"
+  _DECISION_ENGINE: "ortools"
+  _DATADOG_ENABLED: "false"
+  _DATADOG_SITE: "datadoghq.com"
+  _DD_TRACE_ENABLED: "true"
+  _DD_APM_ENABLED: "true"
+  _DD_LLMOBS_ENABLED: "false"
+  _DD_LOGS_ENABLED: "false"
+  _DD_SERVERLESS_LOG_LEVEL: "OFF"
+  _SECRET_DD_API_KEY: "exclusivos-ia-rb-datadog-key-dev"
+  _SECRET_API_KEY: "exclusivos-ia-rb-api-key-dev"
+  _SECRET_MAPS_KEY: "exclusivos-ia-rb-maps-key-dev"
+  _SECRET_CHAT_WEBHOOK: "exclusivos-ia-rb-chat-webhook-dev"
